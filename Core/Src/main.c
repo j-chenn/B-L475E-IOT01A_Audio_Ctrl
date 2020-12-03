@@ -85,6 +85,7 @@ uint8_t currTimeStep = 0;
 uint8_t volume = 0;
 int16_t raw_acc[] = {0, 0, 0};
 float conv_accX = 0;
+float rect_limitY = 0;
 char strBuf[100];
 
 /* USER CODE END PV */
@@ -101,6 +102,7 @@ static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 // Helper function to generate a signal of any frequency and # samples
 void GenerateTone(uint8_t *array, float vol, float freq, uint32_t nSamples);
+void GenerateRectTone(uint8_t *array, float vol, float freq, float dist, uint32_t nSamples);
 float MapFreqVal(int16_t x);
 /* USER CODE END PFP */
 
@@ -198,8 +200,10 @@ int main(void)
 
 			BSP_ACCELERO_AccGetXYZ(raw_acc);
 			conv_accX = MapFreqVal(raw_acc[0]);
+			rect_limitY = (float)raw_acc[1] / 1024);
 
-			GenerateTone(audioBuffer, volume, conv_accX, HALF_BUFFER_SIZE);
+//			GenerateTone(audioBuffer, volume, conv_accX, HALF_BUFFER_SIZE);
+			GenerateRectTone(audioBuffer, volume, conv_accX, rect_limitY, HALF_BUFFER_SIZE);
 
 			currState = IDLE;
 			break;
@@ -213,8 +217,10 @@ int main(void)
 
 			BSP_ACCELERO_AccGetXYZ(raw_acc);
 			conv_accX = MapFreqVal(raw_acc[0]);
+			rect_limitY = (float)raw_acc[1] / 1024;
 
-			GenerateTone(&audioBuffer[HALF_BUFFER_SIZE-1], volume, conv_accX, HALF_BUFFER_SIZE);
+//			GenerateTone(&audioBuffer[HALF_BUFFER_SIZE-1], volume, conv_accX, HALF_BUFFER_SIZE);
+			GenerateRectTone(&audioBuffer[HALF_BUFFER_SIZE-1], volume, conv_accX, rect_limitY, HALF_BUFFER_SIZE);
 
 			currState = IDLE;
 			break;
@@ -600,6 +606,25 @@ void GenerateTone(uint8_t *array, float vol, float freq, uint32_t nSamples){
 	}
 
 }
+
+
+void GenerateRectTone(uint8_t *array, float vol, float freq, float dist, uint32_t nSamples){
+	float twopi = 6.283185307;
+	float angStep = twopi * freq / SAMPLING_FREQ;
+	float currAngle = 0;
+	float tempSample = vol;
+
+	for (uint32_t i = 0; i < (nSamples); i++){
+		currAngle = i * angStep;
+		tempSample = arm_sin_f32(currAngle);
+		if (tempSample > dist)
+			array[i] = (uint8_t)(vol + vol*tempSample);
+		else
+			array[i] = 0;
+	}
+
+}
+
 
 float MapFreqVal(int16_t x){
 
