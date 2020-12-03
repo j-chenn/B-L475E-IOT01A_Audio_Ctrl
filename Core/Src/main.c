@@ -200,7 +200,7 @@ int main(void)
 
 			BSP_ACCELERO_AccGetXYZ(raw_acc);
 			conv_accX = MapFreqVal(raw_acc[0]);
-			rect_limitY = (float)raw_acc[1] / 1024);
+			rect_limitY = (float)raw_acc[1] / 1024;
 
 //			GenerateTone(audioBuffer, volume, conv_accX, HALF_BUFFER_SIZE);
 			GenerateRectTone(audioBuffer, volume, conv_accX, rect_limitY, HALF_BUFFER_SIZE);
